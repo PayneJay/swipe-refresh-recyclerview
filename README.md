@@ -14,7 +14,7 @@ allprojects {
 Step 2. Add the dependency
 ```
 dependencies {
-	        implementation 'com.github.PayneJay:swipe-refresh-recyclerview:-SNAPSHOT'
+	        implementation 'com.github.PayneJay:swipe-refresh-recyclerview:2.0'
 	}
 ```
 * Maven
