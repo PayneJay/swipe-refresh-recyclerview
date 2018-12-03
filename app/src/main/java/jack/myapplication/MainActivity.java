@@ -11,7 +11,5 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         //再次添加一行注释
-        //添加第二行注释
-        //添加第三行注释
     }
 }
