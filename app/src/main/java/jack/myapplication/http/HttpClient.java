@@ -1,9 +1,6 @@
 package jack.myapplication.http;
 
-import android.accounts.NetworkErrorException;
 import android.util.Log;
-
-import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -14,14 +11,11 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 
-import jack.myapplication.utils.SerializeUtils;
+import jack.myapplication.Constants;
 
 public class HttpClient {
-    private final String TAG = "Apollo";
     private final String baseUrl = "http://localhost:8008/data/student.json";
     private static HttpClient instance;
-    private final String GET = "GET";
-    private final String POST = "POST";
 
     public static HttpClient getInstance() {
         if (instance == null) {
@@ -73,13 +67,13 @@ public class HttpClient {
             // 打开一个HttpURLConnection连接
             urlConn = getConnection(requestUrl);
             // 设置为GET请求
-            urlConn.setRequestMethod(GET);
+            urlConn.setRequestMethod(Constants.GET);
             //urlConn设置请求头信息
             // 开始连接
             urlConn.connect();
-            handleResponse(callback, urlConn, GET);
+            handleResponse(callback, urlConn, Constants.GET);
         } catch (Exception e) {
-            Log.e(TAG, e.toString());
+            Log.e(Constants.TAG, e.toString());
         } finally {
             // 关闭连接
             if (urlConn != null) {
@@ -109,7 +103,7 @@ public class HttpClient {
             // Post请求不能使用缓存
             urlConn.setUseCaches(false);
             // 设置为Post请求
-            urlConn.setRequestMethod(POST);
+            urlConn.setRequestMethod(Constants.POST);
             //设置本次连接是否自动处理重定向
             urlConn.setInstanceFollowRedirects(true);
             // 开始连接
@@ -119,9 +113,9 @@ public class HttpClient {
             dos.write(postData);
             dos.flush();
             dos.close();
-            handleResponse(callback, urlConn, POST);
+            handleResponse(callback, urlConn, Constants.POST);
         } catch (Exception e) {
-            Log.e(TAG, e.toString());
+            Log.e(Constants.TAG, e.toString());
         } finally {
             // 关闭连接
             if (urlConn != null) {
@@ -138,12 +132,12 @@ public class HttpClient {
             if (callback != null) {
                 callback.onSuccess(result);
             }
-            Log.e(TAG, requestMethod + "方式请求成功，result--->" + result);
+            Log.e(Constants.TAG, requestMethod + "方式请求成功，result--->" + result);
         } else {
             if (callback != null) {
                 callback.onFailed();
             }
-            Log.e(TAG, requestMethod + "方式请求失败");
+            Log.e(Constants.TAG, requestMethod + "方式请求失败");
         }
     }
 
@@ -151,7 +145,7 @@ public class HttpClient {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
-            int len = 0;
+            int len;
             while ((len = is.read(buffer)) != -1) {
                 baos.write(buffer, 0, len);
             }
@@ -160,42 +154,9 @@ public class HttpClient {
             byte[] byteArray = baos.toByteArray();
             return new String(byteArray);
         } catch (Exception e) {
-            Log.e(TAG, e.toString());
+            Log.e(Constants.TAG, e.toString());
             return null;
         }
-    }
-
-    public String get(String url) {
-        HttpURLConnection conn = null;
-        try {
-            // 利用string url构建URL对象
-            URL mURL = new URL(url);
-            conn = (HttpURLConnection) mURL.openConnection();
-
-            conn.setRequestMethod("GET");
-            conn.setReadTimeout(5000);
-            conn.setConnectTimeout(10000);
-
-            int responseCode = conn.getResponseCode();
-            if (responseCode == 200) {
-
-                InputStream is = conn.getInputStream();
-                String response = streamToString(is);
-                return response;
-            } else {
-                throw new NetworkErrorException("response status is " + responseCode);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-
-            if (conn != null) {
-                conn.disconnect();
-            }
-        }
-
-        return null;
     }
 
 }
