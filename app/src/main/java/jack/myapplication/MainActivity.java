@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 import jack.myapplication.http.HttpClient;
 import jack.myapplication.http.INetCallback;
+import jack.myapplication.utils.SerializeUtils;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,7 +22,10 @@ public class MainActivity extends AppCompatActivity {
     private Runnable postRequestTask = new Runnable() {
         @Override
         public void run() {
-            HttpClient.getInstance().requestPost(new HashMap<String, String>(), null);
+            HashMap<String, String> paramsMap = new HashMap<>();
+            paramsMap.put("user_name", "admin");
+            paramsMap.put("password", "123456");
+            HttpClient.getInstance().requestPost(SerializeUtils.toJson(paramsMap), null);
         }
     };
 

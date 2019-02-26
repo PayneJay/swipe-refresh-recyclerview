@@ -1,6 +1,9 @@
 package jack.myapplication.http;
 
+import android.accounts.NetworkErrorException;
 import android.util.Log;
+
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -10,6 +13,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
+
+import jack.myapplication.utils.SerializeUtils;
 
 public class HttpClient {
     private final String TAG = "Apollo";
@@ -29,8 +34,6 @@ public class HttpClient {
         URL url = new URL(requestUrl);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-        connection.setDoOutput(true);
-        connection.setChunkedStreamingMode(0);
         // 设置连接主机超时时间
         connection.setConnectTimeout(5 * 1000);
         //设置从主机读取数据超时
@@ -52,6 +55,7 @@ public class HttpClient {
      * @param paramsMap 请求参数
      */
     public void requestGet(HashMap<String, String> paramsMap, INetCallback callback) {
+        HttpURLConnection urlConn = null;
         try {
             StringBuilder tempParams = new StringBuilder();
             if (paramsMap != null && paramsMap.size() > 0) {
@@ -67,17 +71,20 @@ public class HttpClient {
             String requestUrl = baseUrl + tempParams.toString();
 
             // 打开一个HttpURLConnection连接
-            HttpURLConnection urlConn = getConnection(requestUrl);
-            // 设置为Post请求
+            urlConn = getConnection(requestUrl);
+            // 设置为GET请求
             urlConn.setRequestMethod(GET);
             //urlConn设置请求头信息
             // 开始连接
             urlConn.connect();
             handleResponse(callback, urlConn, GET);
-            // 关闭连接
-            urlConn.disconnect();
         } catch (Exception e) {
             Log.e(TAG, e.toString());
+        } finally {
+            // 关闭连接
+            if (urlConn != null) {
+                urlConn.disconnect();
+            }
         }
     }
 
@@ -85,27 +92,16 @@ public class HttpClient {
     /**
      * post请求
      *
-     * @param paramsMap 请求参数
+     * @param params 请求参数
      */
-    public void requestPost(HashMap<String, String> paramsMap, INetCallback callback) {
+    public void requestPost(String params, INetCallback callback) {
+        HttpURLConnection urlConn = null;
         try {
-            //合成参数
-            StringBuilder tempParams = new StringBuilder();
-            if (paramsMap != null && paramsMap.size() > 0) {
-                int pos = 0;
-                for (String key : paramsMap.keySet()) {
-                    if (pos > 0) {
-                        tempParams.append("&");
-                    }
-                    tempParams.append(String.format("%s=%s", key, URLEncoder.encode(paramsMap.get(key), "utf-8")));
-                    pos++;
-                }
-            }
-            String params = tempParams.toString();
             // 请求的参数转换为byte数组
             byte[] postData = params.getBytes();
             // 打开一个HttpURLConnection连接
-            HttpURLConnection urlConn = getConnection(baseUrl);
+            urlConn = getConnection(baseUrl);
+            urlConn.setChunkedStreamingMode(0);
             // Post请求必须设置允许输出 默认false
             urlConn.setDoOutput(true);
             //设置请求允许输入 默认是true
@@ -124,11 +120,13 @@ public class HttpClient {
             dos.flush();
             dos.close();
             handleResponse(callback, urlConn, POST);
-
-            // 关闭连接
-            urlConn.disconnect();
         } catch (Exception e) {
             Log.e(TAG, e.toString());
+        } finally {
+            // 关闭连接
+            if (urlConn != null) {
+                urlConn.disconnect();
+            }
         }
     }
 
@@ -165,6 +163,39 @@ public class HttpClient {
             Log.e(TAG, e.toString());
             return null;
         }
+    }
+
+    public String get(String url) {
+        HttpURLConnection conn = null;
+        try {
+            // 利用string url构建URL对象
+            URL mURL = new URL(url);
+            conn = (HttpURLConnection) mURL.openConnection();
+
+            conn.setRequestMethod("GET");
+            conn.setReadTimeout(5000);
+            conn.setConnectTimeout(10000);
+
+            int responseCode = conn.getResponseCode();
+            if (responseCode == 200) {
+
+                InputStream is = conn.getInputStream();
+                String response = streamToString(is);
+                return response;
+            } else {
+                throw new NetworkErrorException("response status is " + responseCode);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+
+        return null;
     }
 
 }
